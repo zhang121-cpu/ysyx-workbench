@@ -25,6 +25,38 @@
  */
 #define MAX_INST_TO_PRINT 10
 
+//为输出最近的16条指令设置结构体
+#ifdef CONFIG_ITRACE
+#define IRINGBUF_SIZE 16 
+typedef struct {
+  uint32_t pc;
+  uint32_t inst;
+  char disasm[128];  //存放反汇编后的指令字符串
+} ItraceStruct;
+
+ItraceStruct iringbuf[IRINGBUF_SIZE];
+int iringbuf_index = 0;
+#endif
+
+//打印结构体内容
+#ifdef CONFIG_ITRACE
+void iringbuf_display() {
+    printf("\n---- iringbuf (last %d instructions) ----\n", IRINGBUF_SIZE);
+
+    int i = 0;
+    for (i = 0; i < IRINGBUF_SIZE; i++) {  
+        if (i == ((iringbuf_index == 0 )?(IRINGBUF_SIZE-1):(iringbuf_index-1))){
+            printf("--> ");  // 标记出错指令
+        } else {
+            printf("    ");
+        }
+        printf("0x%08x: %08x\t%s\n", iringbuf[i].pc, iringbuf[i].inst, iringbuf[i].disasm);
+    }
+    
+    printf("----------------------------------------\n");
+}
+#endif
+
 CPU_state cpu = {};
 uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
@@ -48,7 +80,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
     if (nemu_state.state != NEMU_END)  //如果是ebreak，则不需要将状态设置为NEMU_STOP
       nemu_state.state = NEMU_STOP;
   }
-   #endif
+#endif
 }
 
 static void exec_once(Decode *s, vaddr_t pc) {
@@ -79,6 +111,13 @@ static void exec_once(Decode *s, vaddr_t pc) {
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst, ilen);
+
+  //将指令存入iringbuf中
+  iringbuf[iringbuf_index].pc = s->pc;
+  iringbuf[iringbuf_index].inst = s->isa.inst;
+  disassemble(iringbuf[iringbuf_index].disasm, sizeof(iringbuf[iringbuf_index].disasm),    
+    MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc),(uint8_t *)&s->isa.inst,ilen);
+  iringbuf_index = (iringbuf_index + 1) % IRINGBUF_SIZE;
 #endif
 }
 
@@ -104,6 +143,9 @@ static void statistic() {
 
 void assert_fail_msg() {
   isa_reg_display();
+  #ifdef CONFIG_ITRACE
+  iringbuf_display();
+  #endif
   statistic();
 }
 
@@ -127,13 +169,27 @@ void cpu_exec(uint64_t n) {
   switch (nemu_state.state) {
     case NEMU_RUNNING: nemu_state.state = NEMU_STOP; break;
 
-    case NEMU_END: case NEMU_ABORT:
+    case NEMU_ABORT:
+      #ifdef CONFIG_ITRACE
+        iringbuf_display();
+      #endif
+      Log("nemu: %s at pc = " FMT_WORD, ANSI_FMT("ABORT", ANSI_FG_RED),nemu_state.halt_pc);
+      statistic();
+      break;
+
+    case NEMU_END:
+      if (nemu_state.halt_ret != 0) {
+        #ifdef CONFIG_ITRACE
+          iringbuf_display();
+        #endif
+      }
       Log("nemu: %s at pc = " FMT_WORD,
-          (nemu_state.state == NEMU_ABORT ? ANSI_FMT("ABORT", ANSI_FG_RED) :
-           (nemu_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) :
-            ANSI_FMT("HIT BAD TRAP", ANSI_FG_RED))),
-          nemu_state.halt_pc);
-      // fall through
+          (nemu_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) :
+            ANSI_FMT("HIT BAD TRAP", ANSI_FG_RED)), 
+            nemu_state.halt_pc);
+      statistic();
+      break;
+
     case NEMU_QUIT: statistic();
   }
 }

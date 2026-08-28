@@ -27,6 +27,13 @@ $(BINARY):: compile_git
 override ARGS ?= --log=$(BUILD_DIR)/nemu-log.txt
 override ARGS += $(ARGS_DIFF)
 
+override ELFFILE ?= 
+ifdef CONFIG_FTRACE
+ifneq ($(ELFFILE),)  # 防止make run下空传
+override ARGS += -e $(ELFFILE)     # 有 ELF 才加 -e
+endif
+endif
+
 # Command to execute NEMU
 IMG ?=
 NEMU_EXEC:= $(BINARY) $(ARGS)  $(IMG)
