@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-//#define __NATIVE_USE_KLIB__
+#define __NATIVE_USE_KLIB__   //开启和关闭下，native状态相关函数使用的分别是自己实现的还是gcc的
 
 // string.h
 void  *memset    (void *s, int c, size_t n);

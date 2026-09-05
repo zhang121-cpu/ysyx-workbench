@@ -5,21 +5,12 @@ VFLAGS    = --cc --exe --build -j 0 -Wall --trace-fst
 VSRCS = $(wildcard vsrc/*.v)
 CSRCS = $(wildcard csrc/*.cpp)
 
-# 设定被加载程序，可被AM指定，默认情况下为空
-IMG ?= 
-
-all: run
-
-run: build
-	$(call git_commit, "sim RTL")  # DO NOT REMOVE THIS LINE!!!
-	./obj_dir/Vtop $(IMG)
+all: build
 
 build:
 	$(VERILATOR) $(VFLAGS) -Ivsrc --top-module top $(VSRCS) $(CSRCS)
+	./obj_dir/Vtop
 
 clean:
 	rm -rf obj_dir wave.fst
 
-.PHONY: all run build clean
-
-include ../Makefile

@@ -11,7 +11,6 @@ IMG ?=
 all: run
 
 run: build
-	$(call git_commit, "sim RTL")  # DO NOT REMOVE THIS LINE!!!
 	./obj_dir/Vtop $(IMG)
 
 build:
@@ -22,4 +21,3 @@ clean:
 
 .PHONY: all run build clean
 
-include ../Makefile

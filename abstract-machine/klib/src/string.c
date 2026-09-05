@@ -73,6 +73,9 @@ int strncmp(const char *s1, const char *s2, size_t n) {
     s2++;
     i++;
   }
+  if (i == n) {        //如果前n个字符都相等，返回0，不再进行比较（其实可以使用s1--,s2--的方案，但到时又面临n=0的情况，这在写法将其包含了）
+    return 0;
+  }
   return (unsigned char)*s1 - (unsigned char)*s2;    //返回两个字符的差值，(unsigned char)确保比较结果为无符号整数
 }
 
@@ -124,6 +127,7 @@ void *memcpy(void *out, const void *in, size_t n) {
   return out;                             //返回形参（起始地址）
 }
 
+//存储区 s1 和存储区 s2 的前 n 个字节进行比
 int memcmp(const void *s1, const void *s2, size_t n) {
   size_t i = 0;
   while (i < n) {
@@ -134,9 +138,8 @@ int memcmp(const void *s1, const void *s2, size_t n) {
     s2++;
     i++;
   }
-  if (i == n) {        //如果前n个字节都相等，应该比较最后一个字节的差值而不是下一个
-    s1--;
-    s2--;
+  if (i == n) {        //如果前n个字符都相等，返回0，不再进行比较（其实可以使用s1--,s2--的方案，但到时又面临n=0的情况，这在写法将其包含了）
+    return 0;
   }
   return *(unsigned char *)s1 - *(unsigned char *)s2;    //返回两个字节的差值，(unsigned char)确保比较结果为无符号整数
 }

@@ -48,19 +48,18 @@ char *itoa(int value, char *str, int base) {
   char *p = str;
   char tmp[TEM_SIZE];
   int i = 0;
+  unsigned int v = (unsigned int)value;
   int neg = (value < 0 && base == 10); // 仅在十进制下处理负数
 
-  if (neg < 0) {
-    value = -value;
+  if (neg == 1) {
+    *p++ = '-';
+    v = (unsigned int)(-(value + 1)) + 1u;   // 负数取绝对值, INT_MIN 也不溢出
   }
   do {                                                   //保证至少执行一次循环，tmp中有值
-    tmp[i++] = "0123456789abcdef"[value % base];  //查表法放入余数
-    value /= base;
-  } while (value > 0);            
+    tmp[i++] = "0123456789abcdef"[v % base];  //查表法放入余数
+    v /= base;
+  } while (v > 0);            
 
-  if (neg) {
-    *p++ = '-';
-  }
   while (i > 0) {
     *p++ = tmp[--i];               //将 tmp 中的字符倒序复制到 str 中
   }

@@ -40,6 +40,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vtop___024root final {
         CData/*0:0*/ __VdfgRegularize_h6e95ff9d_0_11;
         CData/*0:0*/ __VstlFirstIteration;
         CData/*0:0*/ __VstlPhaseResult;
+        CData/*0:0*/ __VicoFirstIteration;
+        CData/*0:0*/ __VicoPhaseResult;
         CData/*0:0*/ __Vtrigprevexpr___TOP__clk__0;
         CData/*0:0*/ __VactPhaseResult;
         CData/*0:0*/ __VnbaPhaseResult;
@@ -81,16 +83,17 @@ class alignas(VL_CACHE_LINE_BYTES) Vtop___024root final {
         IData/*31:0*/ __VactIterCount;
         VlUnpacked<QData/*35:0*/, 16> top__DOT__gpr__DOT__mux1__DOT__i0__DOT__i0__DOT__pair_list;
         VlUnpacked<CData/*3:0*/, 16> top__DOT__gpr__DOT__mux1__DOT__i0__DOT__i0__DOT__key_list;
-        VlUnpacked<IData/*31:0*/, 16> top__DOT__gpr__DOT__mux1__DOT__i0__DOT__i0__DOT__data_list;
-        VlUnpacked<QData/*35:0*/, 16> top__DOT__gpr__DOT__mux2__DOT__i0__DOT__i0__DOT__pair_list;
     };
     struct {
+        VlUnpacked<IData/*31:0*/, 16> top__DOT__gpr__DOT__mux1__DOT__i0__DOT__i0__DOT__data_list;
+        VlUnpacked<QData/*35:0*/, 16> top__DOT__gpr__DOT__mux2__DOT__i0__DOT__i0__DOT__pair_list;
         VlUnpacked<CData/*3:0*/, 16> top__DOT__gpr__DOT__mux2__DOT__i0__DOT__i0__DOT__key_list;
         VlUnpacked<IData/*31:0*/, 16> top__DOT__gpr__DOT__mux2__DOT__i0__DOT__i0__DOT__data_list;
         VlUnpacked<QData/*63:0*/, 1> __VstlTriggered;
+        VlUnpacked<QData/*63:0*/, 1> __VicoTriggered;
         VlUnpacked<QData/*63:0*/, 1> __VactTriggered;
         VlUnpacked<QData/*63:0*/, 1> __VnbaTriggered;
-        VlUnpacked<CData/*0:0*/, 2> __Vm_traceActivity;
+        VlUnpacked<CData/*0:0*/, 3> __Vm_traceActivity;
     };
 
     // INTERNAL VARIABLES

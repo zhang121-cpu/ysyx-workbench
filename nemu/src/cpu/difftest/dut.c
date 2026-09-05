@@ -32,9 +32,10 @@ static bool is_skip_ref = false;
 static int skip_dut_nr_inst = 0;
 
 //有的指令不能让REF直接执行, 或者执行后的行为肯定与NEMU不同,如nemu_trap指令
-// 此时可以通过difftest_skip_ref()进行校准, 执行它后, 
+// 此时可以通过difftest_skip_ref()进行标记, 执行它后, 
 //在difftest_step()中会让REF跳过当前指令的执行,
 //同时把NEMU的当前的寄存器状态直接同步到REF中, 效果相当于"该指令的执行结果以NEMU的状态为准".
+//也这意味着该指令跳过了difftest的检查
 // this is used to let ref skip instructions which
 // can not produce consistent behavior with NEMU
 void difftest_skip_ref() {

@@ -20,9 +20,12 @@ module MEM(
 
     reg [31:0] len;
 
+    // 读取pc对应的instruction
     always @(*) begin
-        // 读取pc对应的instruction
-        instruction = pmem_read(pc_state, 4);
+        if (rst)
+            instruction = 32'h00000000;   // 复位期间不取指，输出 0
+        else
+            instruction = pmem_read(pc_state, 4);
     end
 
     always @(*) begin

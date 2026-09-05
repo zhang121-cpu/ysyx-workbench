@@ -5,6 +5,6 @@ module Reg_noen_32b(
     output [31:0] out
 );
 
-    Reg #(32, 32'h00000000) i0 (clk, rst, in, out, 1'b1);
+    Reg #(32, 32'h80000000) i0 (clk, rst, in, out, 1'b1);
 
 endmodule
