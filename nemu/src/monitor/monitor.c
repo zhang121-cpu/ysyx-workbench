@@ -24,6 +24,7 @@ void init_device();
 void init_sdb();
 void init_disasm();
 void init_ftrace(const char *elf_file);
+void init_dtrace(const char *log_file);
 
 static void welcome() {
   Log("Trace: %s", MUXDEF(CONFIG_TRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
@@ -133,6 +134,8 @@ void init_monitor(int argc, char *argv[]) {
   IFDEF(CONFIG_ITRACE, init_disasm());
 
   IFDEF(CONFIG_FTRACE, init_ftrace(elf_file));
+
+  IFDEF(CONFIG_DTRACE, init_dtrace(log_file));
 
   /* Display welcome message. */
   welcome();

@@ -155,8 +155,8 @@ int main(const char *args) {
 // Libraries
 
 void* bench_alloc(size_t size) {
-  size  = (size_t)ROUNDUP(size, 8);
-  char *old = hbrk;
+  size  = (size_t)ROUNDUP(size, 8);        //把size 向上取整到 8 的整数倍
+  char *old = hbrk;       //hbrk模拟堆顶，old保存当前分配位置
   hbrk += size;
   assert((uintptr_t)heap.start <= (uintptr_t)hbrk && (uintptr_t)hbrk < (uintptr_t)heap.end);
   for (uint64_t *p = (uint64_t *)old; p != (uint64_t *)hbrk; p ++) {

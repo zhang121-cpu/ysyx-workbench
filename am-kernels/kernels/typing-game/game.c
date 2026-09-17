@@ -152,15 +152,21 @@ int main() {
 
   printf("Type 'ESC' to exit\n");
 
-  int current = 0, rendered = 0;
-  uint64_t t0 = io_read(AM_TIMER_UPTIME).us;
+  int current = 0, rendered = 0;    // current: 已跑到的逻辑帧号; rendered: 已显示到屏幕的帧号
+  uint64_t t0 = io_read(AM_TIMER_UPTIME).us;   // 开机/进入主循环的起始时刻(微秒)，作为全局帧号基准
   while (1) {
+    // ---- 1. 帧同步：用真实时间算出"此刻总共应该模拟多少帧" ----
+    // 1000000 / FPS = 每帧的微秒数(30fps → 33333us)，整数除法。frames:从时间来看应该跑到的帧号
     int frames = (io_read(AM_TIMER_UPTIME).us - t0) / (1000000 / FPS);
 
+    // ---- 2. 追赶(catch-up)：把落后的帧一次性补齐，使逻辑帧率与真实时间解耦 ----
+    // 若某帧渲染/处理太慢，这里会连续调用多次，保证游戏速度不受渲染性能影响
     for (; current < frames; current++) {
       game_logic_update(current);
     }
 
+    // ---- 3. 处理输入：把键盘事件队列彻底排空 ----
+    // 每次 io_read 出队一个事件，读到 AM_KEY_NONE 说明队列已空，退出内层循环
     while (1) {
       AM_INPUT_KEYBRD_T ev = io_read(AM_INPUT_KEYBRD);
       if (ev.keycode == AM_KEY_NONE) break;
@@ -170,6 +176,8 @@ int main() {
       }
     };
 
+    // ---- 4. 渲染：只在逻辑帧号前进后才重绘(脏标记/dirty flag) ----
+    // 若本帧没有新逻辑产生，就跳过绘制，省下 GPU 的开销，与第二步追赶的逻辑恰好相反
     if (current > rendered) {
       render();
       rendered = current;

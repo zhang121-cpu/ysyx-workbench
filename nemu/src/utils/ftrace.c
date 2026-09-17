@@ -33,7 +33,10 @@ static void init_ftrace_log(const char *elf_file) {
 
 // 初始化 ftrace：读取 ELF 文件，提取函数符号
 void init_ftrace(const char *elf_file) {
-    if (elf_file == NULL) return;
+    if (elf_file == NULL) {
+        Log("ftrace函数: elf_file is NULL, ftrace功能将被禁用");
+        return;
+    }
 
     init_ftrace_log(elf_file);   // ← 先打开日志文件
     
@@ -86,6 +89,8 @@ void init_ftrace(const char *elf_file) {
         // ELF32_ST_TYPE(sym.st_info) 获取符号类型
         // STT_FUNC 表示函数符号
         if (ELF32_ST_TYPE(sym.st_info) == STT_FUNC) {
+            Assert(func_count < MAX_FUNCS, 
+                "ftrace出错:函数数量超过 %d,请修改nemu/src/utils/ftrace中MAX_FUNCS的值", MAX_FUNCS);
             func_table[func_count].addr = sym.st_value;
             func_table[func_count].size = sym.st_size;
             strcpy(func_table[func_count].name, strtab + sym.st_name);
@@ -113,6 +118,9 @@ const char* find_func_name(uint32_t addr) {
 
 // ---- 新增：写入 ftrace 日志文件 ----
 void ftrace_call(uint32_t pc, uint32_t target) {
+    if (ftrace_fp == NULL) {
+        return;
+    }
     fprintf(ftrace_fp, "0x%08x: ", pc);
     for (int i = 0; i < call_depth; i++) fprintf(ftrace_fp, "  ");
     fprintf(ftrace_fp, "call [%s@0x%08x]\n", find_func_name(target), target);
@@ -121,6 +129,9 @@ void ftrace_call(uint32_t pc, uint32_t target) {
 }
 
 void ftrace_ret(uint32_t pc) {
+    if (ftrace_fp == NULL) {
+        return;
+    }
     if (call_depth > 0) call_depth--;
     fprintf(ftrace_fp, "0x%08x: ", pc);
     for (int i = 0; i < call_depth; i++) fprintf(ftrace_fp, "  ");

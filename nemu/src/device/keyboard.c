@@ -41,20 +41,24 @@ enum {
 #define SDL_KEYMAP(k) keymap[SDL_SCANCODE_ ## k] = NEMU_KEY_ ## k;
 static uint32_t keymap[256] = {};
 
+//粘合SDL的键盘扫描码和NEMU的键盘扫描码
 static void init_keymap() {
   MAP(NEMU_KEYS, SDL_KEYMAP)
 }
 
+//定长环形缓冲区，key_r下一个写入位置，key_f下一个读取位置
 #define KEY_QUEUE_LEN 1024
 static int key_queue[KEY_QUEUE_LEN] = {};
 static int key_f = 0, key_r = 0;
 
+//写入
 static void key_enqueue(uint32_t am_scancode) {
   key_queue[key_r] = am_scancode;
   key_r = (key_r + 1) % KEY_QUEUE_LEN;
   Assert(key_r != key_f, "key queue overflow!");
 }
 
+//读取
 static uint32_t key_dequeue() {
   uint32_t key = NEMU_KEY_NONE;
   if (key_f != key_r) {
@@ -64,6 +68,7 @@ static uint32_t key_dequeue() {
   return key;
 }
 
+//发送键盘码
 void send_key(uint8_t scancode, bool is_keydown) {
   if (nemu_state.state == NEMU_RUNNING && keymap[scancode] != NEMU_KEY_NONE) {
     uint32_t am_scancode = keymap[scancode] | (is_keydown ? KEYDOWN_MASK : 0);
