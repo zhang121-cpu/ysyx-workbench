@@ -9,7 +9,7 @@
 
 #include "mem.h"
 
-#define MAX_SIM_CYCLES 5000000
+#define MAX_SIM_CYCLES 500000000
 
 //设置3全局变量以供使用(nullptr在C++中类似NULL在C中，表示空指针)
 VerilatedContext* contextp = nullptr;

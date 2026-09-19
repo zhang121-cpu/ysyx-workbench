@@ -4,8 +4,14 @@
 #include <stdint.h>
 
 #include "mem.h"  
+#include "timer.h"
 
 #define CONFIG_MBASE 0x80000000u
+
+#define DEVICE_BASE 0x10000000
+
+#define SERIAL_PORT (DEVICE_BASE + 0x00000000)
+#define RTC_ADDR    (DEVICE_BASE + 0x00000004)
 
 extern VerilatedContext* contextp;
 
@@ -13,7 +19,17 @@ static bool out_pmem(uint32_t addr) {
     return addr < CONFIG_MBASE || addr >= CONFIG_MBASE + PMEM_SIZE;
 }
 
+static uint64_t rtc_latch = 0;       //用于时间快照
+
 extern "C" uint32_t pmem_read(uint32_t addr, int len) {
+    if (addr == RTC_ADDR + 4) {
+        rtc_latch = uptime_us();
+        return (uint32_t)(rtc_latch >> 32);
+    }
+    if (addr == RTC_ADDR) {
+        return (uint32_t)rtc_latch;          // 低 32 位：同一快照
+    }
+    
     if (out_pmem(addr)) {
         printf("pmem_read: addr out of range: 0x%08x\n", addr);
         contextp->gotFinish(true);                                             // 通知 main 循环结束，走正常 fileend() 收尾
@@ -29,6 +45,11 @@ extern "C" uint32_t pmem_read(uint32_t addr, int len) {
 }
 
 extern "C" void pmem_write(uint32_t addr, uint32_t data, int len) {
+    if (addr == SERIAL_PORT) {  // 如果地址是串口输出地址
+        putchar(data);
+        return;
+    }
+    
     if (out_pmem(addr)) {
         printf("pmem_write: addr out of range: 0x%08x\n", addr);
         contextp->gotFinish(true);                                           // 通知 main 循环结束，走正常 fileend() 收尾
