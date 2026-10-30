@@ -58,19 +58,19 @@ void iringbuf_display() {
 #endif
 
 CPU_state cpu = {};
-uint64_t g_nr_guest_inst = 0;
+uint64_t g_nr_guest_inst = 0;  //一个用于已执行记录客户指令数的计数器
 static uint64_t g_timer = 0; // unit: us
-static bool g_print_step = false;
+static bool g_print_step = false; //确定在每次执行指令时是否向输出界面打印信息
 
 void device_update();
 
 int wp_check();
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
-#ifdef CONFIG_ITRACE_COND
-  if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+#ifdef CONFIG_ITRACE_COND    //编译时开关，Kconfig中定义
+  if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }  //使用值，makefile中定义
 #endif
-  if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
+  if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }  //确定在每次执行指令时是否向输出界面打印信息
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
 //检查监视点是否发生变化
@@ -91,17 +91,17 @@ static void exec_once(Decode *s, vaddr_t pc) {
 #ifdef CONFIG_ITRACE
   char *p = s->logbuf;
   p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
-  int ilen = s->snpc - s->pc;
+  int ilen = s->snpc - s->pc;    // 从 snpc-pc 算指令长度
   int i;
   uint8_t *inst = (uint8_t *)&s->isa.inst;
 #ifdef CONFIG_ISA_x86
-  for (i = 0; i < ilen; i ++) {
+  for (i = 0; i < ilen; i ++) {      // x86：正序
 #else
-  for (i = ilen - 1; i >= 0; i --) {
+  for (i = ilen - 1; i >= 0; i --) {      // riscv：倒序
 #endif
     p += snprintf(p, 4, " %02x", inst[i]);
   }
-  int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
+  int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);    // x86 最长 8 字节，riscv 4
   int space_len = ilen_max - ilen;
   if (space_len < 0) space_len = 0;
   space_len = space_len * 3 + 1;
@@ -125,8 +125,14 @@ static void execute(uint64_t n) {
   Decode s;
   for (;n > 0; n --) {
     exec_once(&s, cpu.pc);
-    g_nr_guest_inst ++;  //一个用于记录客户指令的计数器
+    g_nr_guest_inst ++;  //一个用于已执行记录客户指令数的计数器
     trace_and_difftest(&s, cpu.pc);
+  #ifdef CONFIG_MAX_SIM_CYCLES_ENABLE    //周期数达到上限时自动结束模拟
+    if (g_nr_guest_inst > CONFIG_MAX_SIM_CYCLES){
+      Log("total cycles has reached the limit");
+      nemu_state.state = NEMU_QUIT;
+    }
+  #endif
     if (nemu_state.state != NEMU_RUNNING) break;
     IFDEF(CONFIG_DEVICE, device_update());
   }

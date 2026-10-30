@@ -64,6 +64,9 @@ distclean: clean
 
 .PHONY: help distclean
 
+# 原定是想实现这样的目的：将依赖中autoconf.h中的各种宏开关改为相关.h文件，
+# 然后依赖中删去autoconf.h，改为这些.h文件避免每次修改配置后都要重新编译所有依赖文件。
+# 但似乎没有必要，且目前的实现方式有问题，用不上。
 define call_fixdep
 	@$(FIXDEP) $(1) $(2) unused > $(1).tmp
 	@mv $(1).tmp $(1)

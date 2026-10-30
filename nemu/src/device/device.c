@@ -41,22 +41,24 @@ void device_update() {
   }
   last = now;
 
+  // 1. 更新 VGA 显示
   IFDEF(CONFIG_HAS_VGA, vga_update_screen());
 
 #ifndef CONFIG_TARGET_AM
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
-      case SDL_QUIT:
+      case SDL_QUIT: // 2.用户点击关闭窗口
         nemu_state.state = NEMU_QUIT;
         break;
 #ifdef CONFIG_HAS_KEYBOARD
       // If a key was pressed
-      case SDL_KEYDOWN:
-      case SDL_KEYUP: {
+      // 3. 处理键盘事件
+      case SDL_KEYDOWN:   // 键盘按下
+      case SDL_KEYUP: {    // 键盘释放
         uint8_t k = event.key.keysym.scancode;
         bool is_keydown = (event.key.type == SDL_KEYDOWN);
-        send_key(k, is_keydown);
+        send_key(k, is_keydown);   // 发送给 i8042 键盘控制器
         break;
       }
 #endif

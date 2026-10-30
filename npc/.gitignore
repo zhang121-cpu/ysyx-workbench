@@ -9,8 +9,8 @@
 !*.cpp
 !.gitignore
 !README.md
-build/
+!Kconfig
+include/config
+include/generated
 
-!原先的Makefile
-!wave.fst
 !resource/*

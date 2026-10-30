@@ -16,14 +16,35 @@
 #include <isa.h>
 #include <memory/paddr.h>
 
+#ifdef CONFIG_MTRACE
+extern uint64_t g_nr_guest_inst;
+bool mtrace_enable() {
+    return (g_nr_guest_inst >= CONFIG_TRACE_START) &&
+          (g_nr_guest_inst <= CONFIG_TRACE_END);
+}
+#endif
+
 word_t vaddr_ifetch(vaddr_t addr, int len) {
   return paddr_read(addr, len);
 }
 
 word_t vaddr_read(vaddr_t addr, int len) {
-  return paddr_read(addr, len);
+  word_t data = paddr_read(addr, len);
+  #ifdef CONFIG_MTRACE
+    if (mtrace_enable() && likely(in_pmem(addr))) { 
+      log_write("[mtrace] READ  addr=0x%08x, len=%d, data=0x%08x\n", 
+          addr, len, data);
+    }
+  #endif
+  return data;
 }
 
 void vaddr_write(vaddr_t addr, int len, word_t data) {
   paddr_write(addr, len, data);
+  #ifdef CONFIG_MTRACE
+    if (mtrace_enable() && likely(in_pmem(addr))) {
+        log_write("[mtrace] WRITE addr=0x%08x, len=%d, data=0x%08x\n", 
+            addr, len, data);
+    }
+  #endif
 }

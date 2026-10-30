@@ -21,6 +21,8 @@ static int call_depth = 0;        // 调用深度（缩进用）
 
 // 根据 elf 文件路径推导 build 目录，打开日志文件
 // .../build/add.elf  →  .../build/nemu-log-ftrace.txt
+// ftrace使用时一定需要elf文件，而且elf文件名不固定，无法推导，
+// 所以不如直接传入elf文件，再从elf文件入手推导ftrace日志的位置
 static void init_ftrace_log(const char *elf_file) {
     char path[256];
     strcpy(path, elf_file);

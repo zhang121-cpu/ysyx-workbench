@@ -179,7 +179,7 @@ static int cmd_p(char *args) {
   if (!success) 
     printf("Invalid expression: %s\n", args);
   else 
-    printf("%u\n", result);
+    printf("0x%08x\t%u\n", result, result);
   
   return 0;
 }

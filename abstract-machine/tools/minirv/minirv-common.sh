@@ -29,6 +29,9 @@ flock $minirv_path/.lock -c "test -e $lut_bin_path || (cd $minirv_path && gcc ge
 
 src_dir=`dirname $src`
 riscv64-linux-gnu-gcc -I$src_dir $flags -D_LUT_BIN_PATH=\"$lut_bin_path\" -Wno-trigraphs -c -o $dst $dst_S
+# 两次编译，第一次是.c文件生成.S文件，第二次是.S文件生成可执行文件。
+# 这其中，在-MMD作用下，生成的.d文件内容将是可执行文件与.S文件的依赖关系。
+# .c文件尚且能在第一次编译命令的依赖关系将整个程序重新生成，.h文件将不在成为依赖关系的一部分。
 
 # set a non-standard extension flag in e_flags to indicate minirv
 /bin/echo -ne '\x80' | dd of=$dst bs=1 seek=39 count=1 conv=notrunc 2> /dev/null

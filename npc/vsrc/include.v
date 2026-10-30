@@ -43,7 +43,7 @@
 `define ALU_SRA  4'b0111    // sra / srai：算术右移（高位符号扩展）
 `define ALU_OR   4'b1000    // or / ori：按位或
 `define ALU_AND  4'b1001    // and / andi：按位与
-`define ALU_NOP 4'b1111     //ebreak :system 或未实现指令
+`define ALU_NOP 4'b1111     //ebreak/lui :包括system等无需EXU计算或未实现指令
 
 
 // -------- wdata_sel --------（写回数据来源选择）

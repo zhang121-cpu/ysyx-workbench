@@ -1,7 +1,7 @@
-import "DPI-C" function int unsigned pmem_read(input int unsigned addr, input int len);
-import "DPI-C" function void pmem_write(
+import "DPI-C" function int unsigned npc_mem_read(input int unsigned addr, input int len);
+import "DPI-C" function int unsigned npc_mem_ifetch(input int unsigned addr, input int len);
+import "DPI-C" function void npc_mem_write(
     input int unsigned addr, input int unsigned data, input int len);
-import "DPI-C" function void pmem_rst();
 
 module MEM(    
     input clk,
@@ -25,7 +25,7 @@ module MEM(
         if (rst)
             instruction = 32'h00000000;   // 复位期间不取指，输出 0
         else
-            instruction = pmem_read(pc_state, 4);
+            instruction = npc_mem_ifetch(pc_state, 4);
     end
 
     always @(*) begin
@@ -38,18 +38,17 @@ module MEM(
         endcase
         // 有读写请求时
         if (m_ren)
-            m_rdata = pmem_read(m_addr, len);
+            m_rdata = npc_mem_read(m_addr, len);
         else
             m_rdata = 32'h00000000;
     end
 
+    //读寄存器任何时候都可以，但写寄存器发生在时钟上升沿
     always @(posedge clk) begin
-        if (rst)                        //复位时全清零
-            pmem_rst();
-        else       
-            if (m_wen) begin // 有写请求时
-                pmem_write(m_addr, m_wdata, len);
-            end
+        if (!rst && m_wen) begin       //只有非复位且有写请求时才写
+                                                                 // 对于内存，初始化时候需要清理，单纯的复位不需要
+            npc_mem_write(m_addr, m_wdata, len);
+        end
     end
 
 endmodule

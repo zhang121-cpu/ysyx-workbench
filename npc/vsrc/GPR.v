@@ -1,6 +1,8 @@
 /* verilator lint_off UNUSEDSIGNAL */
 //防止将对gpr最高读取位因不使用警告，同时防止对dummy不对输出有影响警告
 //riscv要求raddr为5位，但目前minirv只需要16个寄存器，故最后的选择器只需要raddr1[3:0],raddr2[3:0]
+import "DPI-C" function void npc_sync_gpr(input int unsigned idx, input int unsigned val);
+
 module GPR (
     input clk,
     input rst,
@@ -43,6 +45,10 @@ module GPR (
     mux16_1_32b mux2 (reg_q, raddr2[3:0], rdata2);
 
     assign reg_check = reg_q[351:320];
+
+    always @(posedge clk) begin
+        if (!rst && wen && !waddr[4]) npc_sync_gpr({28'b0, waddr[3:0]}, wdata);
+    end
 
 endmodule
             

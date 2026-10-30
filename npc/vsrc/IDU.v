@@ -8,12 +8,13 @@ module IDU(
     output [4:0] rs2,
     output reg [31:0] imm,
     output reg [3:0] op_alu,
-    output alu_src2_sel,
+    output reg alu_src1_sel,
+    output reg alu_src2_sel,
+    output reg m_ren,
+    output reg m_wen,
+    output reg [1:0] m_size,
     output reg [1:0] wdata_sel,
-    output m_ren,
-    output m_wen,
-    output [1:0] m_size,
-    output wen,
+    output reg wen,
     output reg jump_en,
     output ebreak_en
 );
@@ -31,6 +32,7 @@ module IDU(
 
     wire [31:0] imm_I, imm_S, imm_B, imm_U, imm_J;
 
+    //立即数左侧使用符号拓展，右侧补0
     assign imm_I = {{20{instruction[31]}}, instruction[31:20]};
     assign imm_S = {{20{instruction[31]}}, instruction[31:25], instruction[11:7]};
     assign imm_B = {{20{instruction[31]}}, instruction[7], instruction[30:25], instruction[11:8], 1'b0};
@@ -57,11 +59,12 @@ module IDU(
 
     always @(*) begin
         op_alu       = `ALU_NOP;     //默认alu码为无行动码
-        alu_src2_sel = 1'b0;      //决定第二个数值是rdata2还是imm，默认为rada2
-        wdata_sel = `WB_ALU;     //默认写回的是ALU运算结果
+        alu_src1_sel = 1'b0;      //决定第一个数值是rdata1还是pc_state，默认为rdada1
+        alu_src2_sel = 1'b0;      //决定第二个数值是rdata2还是imm，默认为rdada2
         m_ren        = 1'b0;               //默认存储器读信号关闭
         m_wen        = 1'b0;               //默认存储器写信号关闭
         m_size       = 2'b00;           //默认长度为1字节（0->1字节, 1->2字节, 2-> 4字节）
+        wdata_sel = `WB_ALU;     //默认写回的是ALU运算结果
         wen          = 1'b0;                 //默认寄存器写信号关闭
         jump_en = 0;                        //默认跳转信号关闭
         
@@ -72,6 +75,7 @@ module IDU(
                         case (funct7)
                             `F7_ADD_SLL :begin                 // add
                                 op_alu = `ALU_ADD;
+                                alu_src1_sel = 1'b0; 
                                 alu_src2_sel = 1'b0; 
                                 wdata_sel = `WB_ALU; 
                                 wen    = 1'b1;
@@ -86,6 +90,7 @@ module IDU(
             `OP_I_ALU: case (funct3)
                 `F3_ADDSUB: begin                       // addi
                     op_alu = `ALU_ADD; 
+                    alu_src1_sel = 1'b0; 
                     alu_src2_sel = 1'b1; 
                     wdata_sel = `WB_ALU; 
                     wen = 1'b1;
@@ -96,18 +101,20 @@ module IDU(
             `OP_I_LOAD: case (funct3)
                 `F3_SLT: begin                          // lw
                     op_alu = `ALU_ADD; 
+                    alu_src1_sel = 1'b0; 
                     alu_src2_sel = 1'b1;
-                    wdata_sel = `WB_MEM; 
                     m_ren = 1'b1; 
                     m_size = 2'b10;
+                    wdata_sel = `WB_MEM; 
                     wen = 1'b1;
                 end
                 `F3_XOR: begin                          // lbu
                     op_alu = `ALU_ADD; 
+                    alu_src1_sel = 1'b0; 
                     alu_src2_sel = 1'b1;
-                    wdata_sel = `WB_MEM; 
                     m_ren = 1'b1; 
                     m_size = 2'b00; 
+                    wdata_sel = `WB_MEM; 
                     wen = 1'b1;
                 end
 
@@ -115,6 +122,7 @@ module IDU(
             endcase
             `OP_I_JALR: begin                           // jalr
                 op_alu = `ALU_ADD; 
+                alu_src1_sel = 1'b0; 
                 alu_src2_sel = 1'b1; 
                 wdata_sel = `WB_PC4; 
                 wen = 1'b1;
@@ -123,12 +131,14 @@ module IDU(
             `OP_S_TYPE: case (funct3)
                 `F3_ADDSUB: begin                       // sb
                     op_alu = `ALU_ADD; 
+                    alu_src1_sel = 1'b0; 
                     alu_src2_sel = 1'b1;
                     m_wen = 1'b1; 
                     m_size = 2'b00;
                 end
                 `F3_SLT: begin                          // sw
                     op_alu = `ALU_ADD; 
+                    alu_src1_sel = 1'b0; 
                     alu_src2_sel = 1'b1;
                     m_wen = 1'b1; 
                     m_size = 2'b10;
@@ -140,6 +150,14 @@ module IDU(
                 wdata_sel = `WB_IMM;
                 wen = 1'b1;
             end
+            `OP_U_AUIPC:begin                       //auipc
+                op_alu = `ALU_ADD;
+                alu_src1_sel = 1'b1;
+                alu_src2_sel = 1'b1;  
+                wdata_sel = `WB_ALU;
+                wen = 1'b1;
+            end
+
 
             default: ;                                
         endcase

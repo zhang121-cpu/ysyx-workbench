@@ -23,9 +23,10 @@ const char *regs[] = {
   "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
 
+//输出10进制内容是选择无符号模式，最简单的例子是如果保留pc值不能保留一个10进制下的负数
 void isa_reg_display() {
   for (int i = 0; i < 32; i++){
-    printf("%s\t0x%08x\t%d\n", regs[i], cpu.gpr[i], cpu.gpr[i]);  //输出gpr的十六进制与十进制
+    printf("%s\t0x%08x\t%u\n", regs[i], cpu.gpr[i], cpu.gpr[i]);  //输出gpr的十六进制与十进制
   }
 }
 

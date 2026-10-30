@@ -1,0 +1,16 @@
+*.*
+*
+!*/
+!Makefile
+!*.mk
+!*.[cSh]
+!*.v
+!*.cc
+!*.cpp
+!.gitignore
+!README.md
+build/
+
+!原先的Makefile
+!wave.fst
+!resource/*

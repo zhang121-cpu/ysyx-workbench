@@ -15,6 +15,9 @@ AM_SRCS := native/trm.c \
 CFLAGS  += -fpie $(shell sdl2-config --cflags)
 ASFLAGS += -fpie -pie
 comma = ,
+
+# -pie,-ldl与abstract-machine/am/src/native/platform.c中的dlsym(RTLD_NEXT, ...)配合，
+#能够让SDL库内部使用的malloc函数必然调用glibc中的实现而不是klib中的
 LDFLAGS_CXX = $(addprefix -Wl$(comma), $(LDFLAGS)) -pie -ldl $(shell sdl2-config --libs)
 
 run: image

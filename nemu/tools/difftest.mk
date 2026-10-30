@@ -14,11 +14,14 @@
 #**************************************************************************************/
 
 ifdef CONFIG_DIFFTEST
+# 编译NEMU对应的REF文件
 DIFF_REF_PATH = $(NEMU_HOME)/$(call remove_quote,$(CONFIG_DIFFTEST_REF_PATH))
 DIFF_REF_SO = $(DIFF_REF_PATH)/build/$(GUEST_ISA)-$(call remove_quote,$(CONFIG_DIFFTEST_REF_NAME))-so
 MKFLAGS = GUEST_ISA=$(GUEST_ISA) SHARE=1 ENGINE=interpreter
+# 生成nemu启动参数
 ARGS_DIFF = --diff=$(DIFF_REF_SO)
 
+# CONFIG_DIFFTEST_REF_NEMU这个参数还没有在NEMU的menuconfig中添加
 ifndef CONFIG_DIFFTEST_REF_NEMU
 $(DIFF_REF_SO):
 	$(MAKE) -s -C $(DIFF_REF_PATH) $(MKFLAGS)

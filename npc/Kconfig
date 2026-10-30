@@ -1,0 +1,252 @@
+mainmenu "NPC Configuration Menu"
+
+# ============================================================================
+# 【移植提醒】本文件中标注【移植提醒】的符号，是 nemu 里存在、但在 npc 移植中
+#   被保留/改名/改义的痕迹。读代码时见到它们即知"这是移植留下的"。
+#
+# 【移植提醒·设备总开关】nemu 的 CONFIG_DEVICE 会激活 paddr.c 的 mmio_read、
+#   monitor.c 的 init_device、sdb.c 的 sdl_clear_event_queue —— 这些函数都在
+#   nemu 的 device/*.c 中，而 npc 并未拷贝那套设备框架（npc 的设备由 DPI-C 在
+#   src/cpu/npc_dpi.c 中直接实现）。故 CONFIG_DEVICE 在 npc 中【永不定义】；
+#   npc 改用 CONFIG_NPC_DEVICE 作为设备总开关（见 src/device/Kconfig）。
+# ============================================================================
+
+# ---- ISA choice：原样保留 nemu 骨架（扩展性来自结构）----
+
+choice
+  prompt "Base ISA"
+  default ISA_riscv
+config ISA_x86
+  bool "x86"
+config ISA_mips32
+  bool "mips32"
+config ISA_riscv
+  bool "riscv"
+config ISA_loongarch32r
+  bool "loongarch32r"
+endchoice
+
+config ISA
+  string
+  default "x86" if ISA_x86
+  default "mips32" if ISA_mips32
+  default "riscv32" if ISA_riscv && !RV64
+  default "riscv64" if ISA_riscv &&  RV64
+  default "loongarch32r" if ISA_loongarch32r
+  default "none"
+
+config ISA64
+  depends on ISA_riscv && RV64
+  bool
+  default y
+
+
+if ISA_riscv
+source "src/isa/riscv32/Kconfig"
+endif
+
+choice
+  prompt "NPC execution engine"
+  default ENGINE_INTERPRETER
+
+config ENGINE_INTERPRETER
+  bool "Interpreter"
+  help
+      【移植提醒】npc 的"引擎"是 RTL（vsrc/），此选项仅为与 nemu 框架兼容
+      （engine/interpreter/init.c 的 engine_start 由它引入编译）。
+endchoice
+
+config ENGINE
+  string
+  default "interpreter" if ENGINE_INTERPRETER
+  default "none"
+
+choice
+  prompt "Running mode"
+  default MODE_SYSTEM
+
+config MODE_SYSTEM
+  bool "System mode"
+  help
+    Support full-system functionality, including privileged instructions, MMU and devices.
+endchoice
+
+
+choice
+  prompt "Build target"
+  default TARGET_NATIVE_ELF
+config TARGET_NATIVE_ELF
+  bool "Executable on Linux Native"
+  help
+    The other options are not suitable for NPCs and have been removed during porting.
+endchoice
+
+
+menu "Build Options"
+
+
+choice
+  prompt "Optimization Level"
+  default CC_O2
+config CC_O0
+  bool "O0"
+config CC_O1
+  bool "O1"
+config CC_O2
+  bool "O2"
+config CC_O3
+  bool "O3"
+endchoice
+
+config CC_OPT
+  string
+  default "-O0" if CC_O0
+  default "-O1" if CC_O1
+  default "-O2" if CC_O2
+  default "-O3" if CC_O3
+  default "none"
+
+config CC_LTO
+  depends on !TARGET_AM
+  bool "Enable link-time optimization"
+  default n
+
+config CC_DEBUG
+  bool "Enable debug information"
+  default n
+
+config CC_ASAN
+  depends on MODE_SYSTEM
+  bool "Enable address sanitizer"
+  default n
+endmenu
+
+menu "Testing and Debugging"
+
+
+config TRACE
+  bool "Enable tracer"
+  default y
+
+config TRACE_START
+  depends on TRACE
+  int "When tracing is enabled (unit: number of instructions)"
+  default 0
+
+config TRACE_END
+  depends on TRACE
+  int "When tracing is disabled (unit: number of instructions)"
+  default 10000
+
+config ITRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable instruction tracer"
+  default y
+
+config ITRACE_COND
+  depends on ITRACE
+  string "Only trace instructions when the condition is true"
+  default "true"
+
+config MTRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable memory tracer"
+  default n
+
+config FTRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable function tracer"
+  default n
+
+config DIFFTEST
+  depends on TARGET_NATIVE_ELF
+  bool "Enable differential testing"
+  default n
+  help
+    Enable differential testing with a reference design.
+    Note that this will significantly reduce the performance of NPC.
+
+choice
+  prompt "Reference design"
+  default DIFFTEST_REF_NEMU
+  depends on DIFFTEST
+config DIFFTEST_REF_NEMU
+  bool "NEMU (as .so)"
+  help
+    当前默认：用 NEMU 编出的 riscv32-nemu-interpreter-so 作为 REF。
+config DIFFTEST_REF_SPIKE
+  bool "Spike (TODO)"
+  depends on ISA_riscv
+  help
+    【预留】将来用 Spike 当 REF。选中前需实现 tools/spike-diff 适配器。
+config DIFFTEST_REF_KVM
+  bool "KVM"
+  depends on ISA_x86
+  help
+    【预留】将来用 KVM 当 REF。选中前需实现 tools/kvm-diff 适配器。
+config DIFFTEST_REF_QEMU
+  bool "QEMU (TODO)"
+  help
+    【预留】将来用 QEMU 当 REF，需自行实现 socket 通信适配。
+endchoice
+
+config DIFFTEST_REF_PATH
+  string
+  default "../nemu" if DIFFTEST_REF_NEMU  # 【注意】相对父目录，需保证 nemu 与 npc 同级
+  default "tools/spike-diff" if DIFFTEST_REF_SPIKE
+  default "tools/kvm-diff" if DIFFTEST_REF_KVM
+  default "tools/qemu-diff" if DIFFTEST_REF_QEMU
+  default "none"
+
+config DIFFTEST_REF_NAME
+  string
+  default "nemu"  if DIFFTEST_REF_NEMU
+  default "spike" if DIFFTEST_REF_SPIKE
+  default "kvm" if DIFFTEST_REF_KVM
+  default "qemu" if DIFFTEST_REF_QEMU
+  default "none"
+
+config WATCHPOINT
+  bool "Enable watchpoint"
+  default n
+
+config WAVE_RECORD
+  depends on TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable wave_record"
+  default n
+  help
+    Typically used in conjunction with MAX_SIM_CYCLES_ENABLE.
+
+config MAX_SIM_CYCLES_ENABLE
+  depends on TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable Max_sim_cycles"
+  default n
+
+config MAX_SIM_CYCLES
+  depends on MAX_SIM_CYCLES_ENABLE
+  int "When simulation is disabled (unit: number of cycles)"
+  default 10000
+
+endmenu
+
+if MODE_SYSTEM
+source "src/memory/Kconfig"
+source "src/device/Kconfig" # ★ 指向 npc 自写的 src/device/Kconfig
+endif
+
+
+menu "Miscellaneous"
+choice
+  prompt "Host timer"
+  default TIMER_GETTIMEOFDAY
+config TIMER_GETTIMEOFDAY
+  bool "gettimeofday"
+config TIMER_CLOCK_GETTIME
+  bool "clock_gettime"
+endchoice
+
+config RT_CHECK
+  bool "Enable runtime checking"
+  default y
+
+endmenu

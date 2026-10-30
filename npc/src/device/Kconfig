@@ -1,0 +1,41 @@
+# ============================================================================
+# NPC 设备配置（npc 自写，非 nemu 拷贝）
+#
+# 【移植提醒】nemu 用 CONFIG_DEVICE 作为设备总开关，它会激活未拷贝的
+#   device/*.c 框架函数（mmio_read / init_device / sdl_clear_event_queue）。
+#   故 CONFIG_DEVICE 在 npc 中【永不定义】；npc 改用 CONFIG_NPC_DEVICE 作为
+#   设备总开关，设备由 DPI-C 在 src/cpu/npc_dpi.c 中直接实现。
+#   分层：CONFIG_NPC_DEVICE（总） → HAS_SERIAL / HAS_TIMER（子）。
+# ============================================================================
+
+menuconfig NPC_DEVICE
+	bool "Devices (NPC)"
+	default n
+
+if NPC_DEVICE
+
+menuconfig HAS_SERIAL
+	bool "Enable serial"
+	default y
+if HAS_SERIAL
+config SERIAL_MMIO
+	hex "MMIO address of the serial controller"
+	default 0x10000000
+endif
+
+menuconfig HAS_TIMER
+	bool "Enable timer"
+	default y
+if HAS_TIMER
+config RTC_MMIO
+	hex "MMIO address of the timer"
+	default 0x10000004
+endif
+
+config DTRACE
+	bool "Enable device tracing"
+	default n
+    help
+      Trace all device accesses.
+
+endif # NPC_DEVICE
