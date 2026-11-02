@@ -1,0 +1,8 @@
+top=top
+
+# VGA_CLK is set to clk in this example
+x (SW7, SW6, SW5, SW4, SW3, SW2, SW1, SW0)
+en (SW8)
+y (LD2, LD1, LD0)
+y_en (LD4)
+y_hex (SEG0A, SEG0B, SEG0C, SEG0D, SEG0E, SEG0F, SEG0G)

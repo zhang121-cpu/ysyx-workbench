@@ -1,18 +1,35 @@
+# ===== 全局先忽略 =====
 *.*
 *
-!*/
-!/nemu/*
-!/nexus-am/*
-!/nanos-lite/*
-!/navy-apps/*
-!/npc/*
-!Makefile
-!README.md
-!.gitignore
-!init.sh
-!/fceux-am
-!/am-kernels
 
-!/ysyx_work/*
+# ===== 放行所有子目录 =====
+# 所有子目录不被忽略
+!*/
+
+# ===== 各子项目：它们各自带白名单 .gitignore，这里只是入口 =====
+# 防御性写法，防止子目录 .gitignore手滑改为了黑名单式，这样保住几个顶层文件
+!/abstract-machine/*
+!/am-kernels/*
+!/fceux-am/*
+!/nemu/*
+!/npc/*
 !/nvboard/*
 
+
+# ======= 其它有用的 ======
+!/npc新/*
+!/npc.old/*
+
+
+# == 自己的作业，文件夹为黑名单方案，更深层文件夹依然可以使用白名单方案===
+!/ysyx_work/**
+
+
+# ===== 根目录零散文件 =====
+!/Makefile
+!/README.md
+!/.gitignore
+!/init.sh
+
+
+# riscv-tests-am里面的文件太多了，不要添被.git记录了

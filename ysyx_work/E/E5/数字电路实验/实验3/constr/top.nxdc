@@ -1,0 +1,10 @@
+top=top
+
+# VGA_CLK is set to clk in this example
+A (SW3, SW2, SW1, SW0)
+B (SW7, SW6, SW5, SW4)
+opcode (SW10, SW9, SW8)
+Carry (LD6)
+Zero (LD5)
+Overflow (LD4)
+Result (LD3, LD2, LD1, LD0)

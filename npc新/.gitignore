@@ -9,8 +9,7 @@
 !*.cpp
 !.gitignore
 !README.md
-build/
+obj_dir/
 
 !原先的Makefile
-!wave.fst
 !resource/*
