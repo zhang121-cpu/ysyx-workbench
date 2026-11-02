@@ -14,4 +14,7 @@ include/config
 include/generated
 
 !resource/*
+
+!程序移植说明.md
+
 build/
